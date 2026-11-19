@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AChan AI Studio</title>
+<meta name="description" content="AChan AI Studio - Burmese text-to-speech and YouTube thumbnail maker" />
+<meta name="theme-color" content="#020617" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="icon" type="image/png" href="/icons/icon-192.png" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: #020617; }
+  body {
+    background: radial-gradient(ellipse at top, #0f172a 0%, #020617 60%);
+    background-color: #020617;
+    color: #f1f5f9;
+    font-family: 'Pyidaungsu', 'Myanmar Text', 'Noto Sans Myanmar', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    padding: 16px;
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 1152px; margin: 0 auto; position: relative; z-index: 1; }
+  header.top { text-align: center; margin: 8px 0 20px; position: relative; }
+  header.top h1 {
+    font-size: clamp(28px, 5vw, 40px); font-weight: 900; padding-bottom: 6px;
+    background: linear-gradient(to right, #22d3ee, #3b82f6);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  header.top p { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+  #installBtn {
+    display: none; margin: 14px auto 0; padding: 10px 22px; border-radius: 999px;
+    border: 1px solid rgba(245,158,11,.5); background: rgba(245,158,11,.12); color: #fbbf24;
+    font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit;
+  }
+  #installBtn:hover { background: rgba(245,158,11,.22); }
+  .card {
+    background: rgba(15,23,42,.62); border: 1px solid rgba(51,65,85,.55);
+    border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    backdrop-filter: blur(12px);
+  }
+  .tabs { display: flex; justify-content: center; margin-bottom: 24px; }
+  .tabs-inner {
+    display: flex; gap: 8px; background: rgba(15,23,42,.62); padding: 6px;
+    border-radius: 16px; border: 1px solid rgba(51,65,85,.55); overflow-x: auto; max-width: 100%;
+  }
+  .tab-btn {
+    padding: 12px 24px; border-radius: 12px; border: none; background: transparent;
+    color: #94a3b8; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap;
+    font-family: inherit; transition: all .25s;
+  }
+  .tab-btn:hover { color: #fff; background: rgba(255,255,255,.05); }
+  .tab-btn.active-audio { background: linear-gradient(to right, #0891b2, #2563eb); color: #fff; box-shadow: 0 8px 20px rgba(30,58,138,.4); }
+  .tab-btn.active-thumb { background: linear-gradient(to right, #059669, #0d9488); color: #fff; box-shadow: 0 8px 20px rgba(19,78,74,.4); }
+  label.lbl { display: block; font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 10px; }
+  textarea, input[type="text"], select {
+    width: 100%; background: rgba(2,6,23,.55); border: 1px solid #334155; border-radius: 12px;
+    padding: 14px; color: #e2e8f0; outline: none; font-family: inherit; font-size: 15px;
+  }
+  textarea:focus, input[type="text"]:focus, select:focus { border-color: rgba(6,182,212,.55); }
+  select { padding: 12px 14px; font-size: 14px; }
+  .grid-audio { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  @media (min-width: 1024px) { .grid-audio { grid-template-columns: 2fr 1fr; } }
+  .stack > * + * { margin-top: 24px; }
+  .stack-sm > * + * { margin-top: 20px; }
+  .engine-row { display: flex; gap: 8px; }
+  .engine-btn {
+    flex: 1; padding: 12px 8px; border-radius: 12px; border: 1px solid #1e293b; cursor: pointer;
+    background: rgba(2,6,23,.5); color: #94a3b8; font-weight: 700; font-size: 13px; font-family: inherit;
+    transition: all .2s; text-align: center;
+  }
+  .engine-btn small { display: block; font-weight: 500; font-size: 11px; margin-top: 2px; color: #64748b; }
+  .engine-btn.sel-nara { background: rgba(30,41,59,1); border-color: rgba(245,158,11,.55); color: #fde68a; }
+  .engine-btn.sel-nara small { color: #f59e0b; }
+  .engine-btn.sel-gemini { background: rgba(30,41,59,1); border-color: rgba(6,182,212,.55); color: #a5f3fc; }
+  .engine-btn.sel-gemini small { color: #22d3ee; }
+  .voice-list {
+    display: flex; flex-direction: column; gap: 8px; max-height: 168px; overflow-y: auto;
+    background: rgba(2,6,23,.5); padding: 8px; border-radius: 12px; border: 1px solid #1e293b;
+  }
+  .voice-item {
+    text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid transparent;
+    background: rgba(15,23,42,.5); cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+    font-family: inherit; color: inherit; width: 100%;
+  }
+  .voice-item:hover { background: #1e293b; }
+  .voice-item.sel { background: #1e293b; border-color: rgba(6,182,212,.5); }
+  .voice-item.sel-nara { background: #1e293b; border-color: rgba(245,158,11,.55); }
+  .voice-item .vname { font-weight: 700; font-size: 14px; color: #e2e8f0; }
+  .voice-item .vdesc { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+  .badge { font-size: 9px; padding: 2px 6px; border-radius: 6px; margin-left: 6px; vertical-align: middle; }
+  .badge-m { background: rgba(59,130,246,.1); color: #60a5fa; border: 1px solid rgba(59,130,246,.25); }
+  .badge-f { background: rgba(236,72,153,.1); color: #f472b6; border: 1px solid rgba(236,72,153,.25); }
+  .check { color: #22d3ee; font-weight: 900; }
+  .check-nara { color: #f59e0b; font-weight: 900; }
+  .chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .chip {
+    padding: 9px 6px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+    border: 1px solid #1e293b; background: rgba(2,6,23,.5); color: #94a3b8; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .2s;
+  }
+  .chip:hover { background: #1e293b; }
+  .chip.sel-pink { background: #1e293b; border-color: rgba(236,72,153,.5); color: #f1f5f9; }
+  .chip.sel-yellow { background: #1e293b; border-color: rgba(234,179,8,.5); color: #f1f5f9; }
+  .row-flex { display: flex; gap: 8px; }
+  .row-flex .chip { flex: 1; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: rgba(2,6,23,.5); border: 1px solid #1e293b; border-radius: 12px; padding: 12px 14px; }
+  .toggle-row .t-text { font-size: 13px; color: #e2e8f0; font-weight: 600; }
+  .toggle-row .t-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; border-radius: 999px; background: #334155; cursor: pointer; transition: .2s; }
+  .slider:before { content: ""; position: absolute; width: 20px; height: 20px; border-radius: 50%; left: 3px; top: 3px; background: #e2e8f0; transition: .2s; }
+  .switch input:checked + .slider { background: #d97706; }
+  .switch input:checked + .slider:before { transform: translateX(22px); }
+  .btn-main {
+    width: 100%; padding: 16px; border: none; border-radius: 12px; cursor: pointer;
+    font-weight: 700; font-size: 15px; color: #fff; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 8px; transition: all .2s;
+  }
+  .btn-audio { background: linear-gradient(to right, #0891b2, #2563eb); box-shadow: 0 10px 25px rgba(30,58,138,.35); }
+  .btn-audio:hover:not(:disabled) { background: linear-gradient(to right, #06b6d4, #3b82f6); }
+  .btn-thumb { background: linear-gradient(to right, #059669, #0d9488); box-shadow: 0 10px 25px rgba(19,78,74,.35); }
+  .btn-thumb:hover:not(:disabled) { background: linear-gradient(to right, #10b981, #14b8a6); }
+  .btn-main:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-sub {
+    padding: 14px 20px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 14px;
+    background: #1e293b; border: 1px solid #475569; color: #e2e8f0; font-family: inherit;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-sub:hover { background: #334155; }
+  .progress-text { font-size: 13px; color: #7dd3fc; min-height: 18px; text-align: center; }
+  .error-box {
+    display: none; background: rgba(69,10,10,.55); border: 1px solid rgba(239,68,68,.45);
+    color: #fecaca; border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.6;
+  }
+  .error-box.show { display: block; }
+  .error-box button {
+    margin-top: 10px; padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(239,68,68,.5);
+    background: rgba(127,29,29,.5); color: #fecaca; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13px;
+  }
+  .player-card { display: none; border-color: rgba(6,182,212,.35); position: relative; overflow: hidden; }
+  .player-card.show { display: block; }
+  .player-card:before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(to right, #22d3ee, #3b82f6); }
+  .player-inner { display: flex; align-items: center; gap: 14px; background: rgba(15,23,42,.6);
+    border-radius: 12px; padding: 14px; border: 1px solid rgba(51,65,85,.5); margin-top: 12px; }
+  .play-btn {
+    width: 48px; height: 48px; flex-shrink: 0; border: none; border-radius: 50%; cursor: pointer;
+    background: linear-gradient(to right, #06b6d4, #2563eb); color: #fff; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bars { flex: 1; display: flex; justify-content: center; align-items: center; gap: 3px; height: 32px; }
+  .bars div { width: 4px; background: #06b6d4; border-radius: 999px; height: 4px; opacity: .4; transition: height .1s; }
+  .bars.playing div { opacity: 1; animation: bounce .7s ease-in-out infinite alternate; }
+  @keyframes bounce { from { height: 6px; } to { height: 28px; } }
+  .dl-btn { background: #1e293b; color: #e2e8f0; padding: 10px; border-radius: 10px; border: 1px solid #475569; cursor: pointer; font-size: 16px; }
+  .dl-btn:hover { background: #334155; color: #fff; }
+  .attribution { font-size: 11px; color: #64748b; text-align: center; line-height: 1.7; word-break: break-all; }
+  .attribution a { color: #94a3b8; }
+  .char-count { font-size: 12px; color: #94a3b8; font-family: monospace; }
+  .textarea-wrap { position: relative; }
+  .textarea-tools { position: absolute; bottom: 12px; right: 12px; display: flex; align-items: center; gap: 8px;
+    background: rgba(15,23,42,.85); padding: 6px 8px; border-radius: 12px; border: 1px solid rgba(51,65,85,.5); }
+  .clear-btn { padding: 7px 10px; border-radius: 8px; background: #1e293b; color: #cbd5e1; border: none; cursor: pointer; font-size: 13px; }
+  .clear-btn:hover { background: rgba(127,29,29,.5); color: #fca5a5; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px; }
+  .swatch {
+    border: 2px solid #1e293b; background: rgba(2,6,23,.5); border-radius: 12px; padding: 8px 4px 6px;
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-family: inherit;
+  }
+  .swatch .dot { width: 26px; height: 26px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); }
+  .swatch .sname { font-size: 8.5px; color: #94a3b8; line-height: 1.25; text-align: center; }
+  .swatch.sel { border-color: rgba(16,185,129,.6); background: #1e293b; }
+  .swatch.sel .sname { color: #a7f3d0; }
+  .ratio-row { display: flex; gap: 14px; }
+  .ratio-btn {
+    flex: 1; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer;
+    border: 1px solid #334155; background: rgba(2,6,23,.5); color: #94a3b8; font-family: inherit; transition: all .2s;
+  }
+  .ratio-btn.sel { background: #1e293b; border-color: rgba(16,185,129,.5); color: #34d399; }
+  .upload-box {
+    display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 74px;
+    border: 1px dashed #334155; border-radius: 12px; cursor: pointer; background: rgba(2,6,23,.5);
+    color: #cbd5e1; font-size: 14px; font-weight: 500; padding: 12px; text-align: center;
+  }
+  .upload-box:hover { border-color: rgba(16,185,129,.5); }
+  .upload-box.has { background: rgba(6,78,59,.3); border-color: rgba(16,185,129,.5); color: #a7f3d0; }
+  .hint { font-size: 11px; color: #94a3b8; line-height: 1.6; }
+  #thumbCanvas { max-width: 100%; height: auto; border-radius: 12px; border: 1px solid #334155; background: #020617; display: none; }
+  #thumbCanvas.show { display: block; margin: 0 auto; }
+  #toast {
+    position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 100; display: none;
+    padding: 14px 22px; border-radius: 14px; font-size: 14px; font-weight: 500; max-width: 92vw;
+    box-shadow: 0 20px 40px rgba(0,0,0,.5); backdrop-filter: blur(12px);
+  }
+  #toast.err { display: block; background: rgba(69,10,10,.75); border: 1px solid rgba(239,68,68,.5); color: #fecaca; }
+  #toast.ok { display: block; background: rgba(6,40,30,.75); border: 1px solid rgba(16,185,129,.5); color: #a7f3d0; }
+  .hidden { display: none !important; }
+  .spin { display: inline-block; animation: sp 1s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="wrap">
+
+  <header class="top">
+    <h1>🎙️ AChan AI Studio</h1>
+    <p>အသံဖန်တီးမှု နှင့် Thumbnail များကို တစ်နေရာတည်းတွင် အလွယ်တကူ ပြုလုပ်ပါ</p>
+    <button id="installBtn" type="button">📲 App အဖြစ် သွင်းမည် (Install)</button>
+  </header>
+
+  <div class="tabs">
+    <div class="tabs-inner">
+      <button class="tab-btn active-audio" id="tabBtnAudio" type="button">🔊 အသံဖန်တီးမည်</button>
+      <button class="tab-btn" id="tabBtnThumb" type="button">🖼️ Thumbnail Maker</button>
+    </div>
+  </div>
+
+  <!-- ================= AUDIO TAB ================= -->
+  <section id="tabAudio">
+    <div class="grid-audio">
+      <div class="stack">
+        <div class="card">
+          <label class="lbl">✍️ အသံဖန်တီးလိုသော စာသား</label>
+          <div class="textarea-wrap">
+            <textarea id="audioText" rows="14" style="height:380px; resize:none; font-size:17px; line-height:1.7; padding-bottom:60px;" placeholder="အသံဖန်တီးလိုသော စာသားများကို ဤနေရာတွင် ရိုက်ထည့်ပါ..."></textarea>
+            <div class="textarea-tools">
+              <span class="char-count"><span id="charCount">0</span> စာလုံး</span>
+              <button class="clear-btn" id="clearTextBtn" type="button" title="ရှင်းမည်">🗑️</button>
+            </div>
+          </div>
+        </div>
+        <p class="attribution">Uses Nara Mini v1 by Nara contributors — <a href="https://naraaudio.app" target="_blank" rel="noreferrer">https://naraaudio.app</a> — <a href="https://huggingface.co/YeeNyunn/nara-mini-v1" target="_blank" rel="noreferrer">https://huggingface.co/YeeNyunn/nara-mini-v1</a> — Licensed under Apache 2.0</p>
+      </div>
+
+      <div class="stack">
+        <div class="card stack-sm">
+          <div>
+            <label class="lbl">⚙️ TTS Engine ရွေးပါ</label>
+            <div class="engine-row">
+              <button class="engine-btn sel-nara" id="engineNara" type="button">🆓 Nara Mini (Free)<small>Key မလို · မြန်မာ အသံ ၄ ခု</small></button>
+              <button class="engine-btn" id="engineGemini" type="button">✨ Gemini<small>Server key သုံးသည်</small></button>
+            </div>
+          </div>
+
+          <!-- NARA CONTROLS -->
+          <div id="naraControls" class="stack-sm">
+            <div>
+              <label class="lbl">🎤 အသံသရုပ်ဆောင် (Nara)</label>
+              <div class="voice-list" id="naraVoiceList"></div>
+            </div>
+            <div class="toggle-row">
+              <div>
+                <div class="t-text">ဂဏန်းများကို မြန်မာလို ဖတ်ပေးရန်</div>
+                <div class="t-sub">ဥပမာ — ၁၂၀၀ → တစ်ထောင့်နှစ်ရာ</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="normalizeToggle" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- GEMINI CONTROLS -->
+          <div id="geminiControls" class="stack-sm hidden">
+            <div>
+              <label class="lbl">🎤 အသံသရုပ်ဆောင်</label>
+              <div class="voice-list" id="geminiVoiceList"></div>
+            </div>
+            <div>
+              <label class="lbl">🎚️ အသံ အနိမ့်အမြင့်</label>
+              <select id="pitchSelect"></select>
+            </div>
+            <div>
+              <label class="lbl">🎭 ခံစားချက် / လေသံ</label>
+              <div class="chip-grid" id="emotionGrid"></div>
+            </div>
+            <div>
+              <label class="lbl">⏩ အမြန်နှုန်း</label>
+              <div class="row-flex" id="speedRow"></div>
+            </div>
+          </div>
+
+          <button class="btn-main btn-audio" id="genAudioBtn" type="button" disabled>▶️ အသံဖန်တီးမည်</button>
+          <div class="progress-text" id="audioProgress"></div>
+          <div class="error-box" id="audioError"></div>
+        </div>
+
+        <div class="card player-card" id="playerCard">
+          <div style="font-size:14px; font-weight:700;">🔊 အသံဖန်တီးမှု ပြီးစီးပါပြီ</div>
+          <div class="player-inner">
+            <button class="play-btn" id="playBtn" type="button">▶</button>
+            <div class="bars" id="bars"></div>
+            <button class="dl-btn" id="downloadAudioBtn" type="button" title="Download Audio">⬇️</button>
+          </div>
+          <audio id="audioEl" class="hidden"></audio>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= THUMBNAIL TAB ================= -->
+  <section id="tabThumb" class="hidden">
+    <div style="max-width:896px; margin:0 auto;" class="stack">
+      <div class="card stack-sm">
+        <div>
+          <label class="lbl">🌄 ပုံအတွက် Prompt (English)</label>
+          <textarea id="thumbPrompt" rows="3" style="resize:none;" placeholder="e.g. A dramatic B-2 stealth bomber flying through dark clouds at night, cinematic lighting"></textarea>
+          <p class="hint" style="margin-top:6px;">နောက်ခံပုံကို AI ဖြင့် ထုတ်ပေးပါမည်။ စာသားကိုတော့ ပုံပေါ်မှာ တိကျစွာ ထည့်ပေးပါမည် (AI က မြန်မာစာ မမှန်တတ်လို့ပါ)။</p>
+        </div>
+        <div>
+          <label class="lbl">📖 Thumbnail တွင်ပါဝင်မည့် စာသား (Title Text)</label>
+          <textarea id="thumbTitle" rows="3" style="resize:none;" placeholder="ဥပမာ - ရန်သူမသိအောင် တိတ်တဆိတ် တိုက်ခိုက်နိုင်တဲ့ အမှောင်ထဲက B-2 Spirit..."></textarea>
+        </div>
+        <div>
+          <label class="lbl">💬 Subtitle စာသား (Optional)</label>
+          <input type="text" id="thumbSubtitle" placeholder="ဥပမာ - အပိုင်း (၁) အပြည့်အစုံ..." />
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <label class="lbl" style="margin-bottom:0;">🔤 Custom Font တင်ရန် (Optional)</label>
+            <button id="removeFontBtn" type="button" class="hidden" style="background:rgba(69,10,10,.3); color:#f87171; border:none; padding:4px 10px; border-radius:8px; font-size:12px; cursor:pointer; font-family:inherit;">✖ ဖြုတ်မည်</button>
+          </div>
+          <p class="hint" style="margin:6px 0 8px;">မြန်မာစာသားများကို AI က သေချာမရေးပေးနိုင်ပါက မိမိစိတ်ကြိုက် မြန်မာ Font (.ttf, .otf) တင်၍ အသုံးပြုနိုင်ပါသည်။</p>
+          <label class="upload-box" id="fontUploadBox">
+            <span id="fontUploadText">📤 Click to upload .TTF / .OTF font file</span>
+            <input type="file" id="fontFile" class="hidden" accept=".ttf,.otf,.woff" />
+          </label>
+        </div>
+        <div>
+          <label class="lbl">🎨 စာသား ကာလာ (Text Color)</label>
+          <div class="swatches" id="swatches"></div>
+          <div id="colorName" style="font-size:12px; color:#94a3b8; margin-top:8px;"></div>
+        </div>
+        <div>
+          <label class="lbl">🪄 စာသား ဒီဇိုင်း (Text Style)</label>
+          <select id="thumbStyle">
+            <option value="outline">Outline အထူ (Heavy Outline)</option>
+            <option value="shadow">အရိပ် (Drop Shadow)</option>
+            <option value="bottom-pill">အောက်ခြေ Pill (Bottom Pill)</option>
+            <option value="top-pill">အပေါ် Pill (Top Pill)</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">⚙️ ပုံအရွယ်အစား (Aspect Ratio)</label>
+          <div class="ratio-row">
+            <button class="ratio-btn sel" id="ratio169" type="button">▬ 16:9 (YouTube)</button>
+            <button class="ratio-btn" id="ratio916" type="button">▮ 9:16 (Shorts/Reels)</button>
+          </div>
+        </div>
+        <div class="row-flex" style="align-items:stretch;">
+          <button class="btn-main btn-thumb" id="genThumbBtn" type="button" style="flex:2;">✨ Thumbnail ဖန်တီးမည်</button>
+        </div>
+        <div class="progress-text" id="thumbProgress" style="color:#6ee7b7;"></div>
+        <div class="error-box" id="thumbError"></div>
+      </div>
+
+      <div class="card hidden" id="thumbResultCard">
+        <div style="font-size:16px; font-weight:700; border-bottom:1px solid #1e293b; padding-bottom:14px; margin-bottom:18px;">✅ ဖန်တီးမှု ရလဒ်</div>
+        <canvas id="thumbCanvas" width="1280" height="720"></canvas>
+        <div style="text-align:center; margin-top:20px;">
+          <button class="btn-sub" id="downloadThumbBtn" type="button">⬇️ ပုံကို ဒေါင်းလုဒ်ဆွဲမည် (PNG)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+/* ================= DATA (from the original AChan AI Studio) ================= */
+const GEMINI_VOICES = [
+  { id: 'Charon', name: 'အောင်အောင်', gender: 'Male', mmGender: 'ကျား', desc: 'သြဇာပါသော' },
+  { id: 'Fenrir', name: 'ရဲရင့်', gender: 'Male', mmGender: 'ကျား', desc: 'ခွန်အားပါသော' },
+  { id: 'Kore', name: 'စုစု', gender: 'Female', mmGender: 'မ', desc: 'ချိုသာသော' },
+  { id: 'Aoede', name: 'သန္တာ', gender: 'Female', mmGender: 'မ', desc: 'နူးညံ့သော' },
+  { id: 'Orus', name: 'မင်းခန့်', gender: 'Male', mmGender: 'ကျား', desc: 'တည်ငြိမ်သော' },
+  { id: 'Leda', name: 'လှိုင်', gender: 'Female', mmGender: 'မ', desc: 'တောက်ပသော' }
+];
+const NARA_VOICES = [
+  { id: 'shoon', name: 'Shoon', gender: 'Female', mmGender: 'မ', desc: 'အမျိုးသမီး အသံ' },
+  { id: 'thazin', name: 'Thazin', gender: 'Female', mmGender: 'မ', desc: 'အမျိုးသမီး အသံ' },
+  { id: 'ko-banyar', name: 'Ko Banyar', gender: 'Male', mmGender: 'ကျား', desc: 'အမျိုးသား အသံ' },
+  { id: 'htet-myat', name: 'Htet Myat', gender: 'Male', mmGender: 'ကျား', desc: 'အမျိုးသား အသံ' }
+];
+const EMOTIONS = [
+  { id: 'Neutral', label: 'ပုံမှန်', emoji: '😐' },
+  { id: 'Happy', label: 'ပျော်ရွှင်သော', emoji: '😊' },
+  { id: 'Sad', label: 'ဝမ်းနည်းသော', emoji: '😢' },
+  { id: 'Angry', label: 'ဒေါသထွက်သော', emoji: '😠' },
+  { id: 'Storytelling', label: 'ပုံပြင်ပြော', emoji: '📖' },
+  { id: 'Professional', label: 'လုပ်ငန်းသုံး', emoji: '👔' }
+];
+const SPEEDS = [
+  { id: 'slow', label: 'အနှေး', prompt: 'slow', emoji: '🐌' },
+  { id: 'normal', label: 'ပုံမှန်', prompt: 'normal', emoji: '▶️' },
+  { id: 'fast', label: 'အမြန်', prompt: 'fast', emoji: '⚡' }
+];
+const PITCHES = [
+  { id: 'normal', label: 'ပုံမှန် (Normal)', prompt: '', emoji: '🎵' },
+  { id: 'documentary', label: 'ရုပ်ရှင် Recap / မှတ်တမ်း', prompt: 'a deep, engaging, and dramatic documentary narrator pitch', emoji: '🎬' },
+  { id: 'storytelling', label: 'ပုံပြင်ပြော (Storytelling)', prompt: 'an expressive, engaging, and immersive storytelling pitch', emoji: '📖' },
+  { id: 'news', label: 'သတင်းကြေညာ (News)', prompt: 'a professional, authoritative, and clear news anchor pitch', emoji: '📰' }
+];
+const COLOR_STYLES = [
+  { name: 'Neon Cyan and Bright Yellow', swatch: 'linear-gradient(135deg,#00e5ff 50%,#ffff00 50%)', fill: '#FFFF00', stroke: '#000000', shadow: '#00FFFF', blur: 30, sw: 6 },
+  { name: 'Pure White with Heavy Drop Shadow', swatch: '#ffffff', fill: '#FFFFFF', stroke: '#000000', shadow: 'rgba(0,0,0,0.9)', blur: 25, sw: 8 },
+  { name: 'Blood Red and Pure White', swatch: 'linear-gradient(135deg,#8b0000 50%,#ffffff 50%)', fill: '#FFFFFF', stroke: '#8B0000', shadow: '#000000', blur: 20, sw: 12 },
+  { name: 'Glowing Green and Dark Contrast', swatch: '#00ff00', fill: '#00FF00', stroke: '#000000', shadow: '#003300', blur: 25, sw: 8 },
+  { name: 'Luxury Gold and Deep Black', swatch: 'linear-gradient(135deg,#ffd700 50%,#1a1a1a 50%)', fill: '#FFD700', stroke: '#331A00', shadow: '#FF8C00', blur: 25, sw: 10 },
+  { name: 'Electric Blue and Crisp White', swatch: 'linear-gradient(135deg,#2979ff 50%,#ffffff 50%)', fill: '#FFFFFF', stroke: '#0D47A1', shadow: '#2979FF', blur: 25, sw: 8 },
+  { name: 'Vibrant Magenta and Deep Indigo', swatch: 'linear-gradient(135deg,#ff00ff 50%,#4b0082 50%)', fill: '#FF00FF', stroke: '#4B0082', shadow: '#FF1493', blur: 30, sw: 8 },
+  { name: 'Sunset Orange and Warm Yellow', swatch: 'linear-gradient(135deg,#ff9100 50%,#ffea00 50%)', fill: '#FFEA00', stroke: '#4E2600', shadow: '#FF6D00', blur: 25, sw: 8 },
+  { name: 'Metallic Silver and Ice Blue', swatch: 'linear-gradient(135deg,#cfd8dc 50%,#81d4fa 50%)', fill: '#ECEFF1', stroke: '#263238', shadow: '#81D4FA', blur: 25, sw: 8 },
+  { name: 'Bold Yellow and Solid Black', swatch: 'linear-gradient(135deg,#ffeb3b 50%,#000000 50%)', fill: '#FFEB3B', stroke: '#000000', shadow: 'rgba(0,0,0,0.85)', blur: 15, sw: 10 }
+];
+
+/* ================= HELPERS ================= */
+const $ = (id) => document.getElementById(id);
+let toastTimer = null;
+function showToast(message, type) {
+  const t = $('toast');
+  t.textContent = message;
+  t.className = type === 'error' ? 'err' : 'ok';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; t.style.display = 'none'; }, 4200);
+  t.style.display = 'block';
+}
+function base64ToBytes(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+function pcmToWavArrayBuffer(pcmBytes, sampleRate) {
+  const buf = new ArrayBuffer(44 + pcmBytes.length);
+  const view = new DataView(buf);
+  const writeStr = (off, s) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+  writeStr(0, 'RIFF'); view.setUint32(4, 36 + pcmBytes.length, true);
+  writeStr(8, 'WAVE'); writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+  writeStr(36, 'data'); view.setUint32(40, pcmBytes.length, true);
+  new Uint8Array(buf).set(pcmBytes, 44);
+  return buf;
+}
+function encodeWavFromAudioBuffer(buffer) {
+  const numCh = 1, rate = buffer.sampleRate;
+  const length = buffer.length;
+  const data = buffer.getChannelData(0);
+  const out = new ArrayBuffer(44 + length * 2);
+  const view = new DataView(out);
+  const writeStr = (off, s) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+  writeStr(0, 'RIFF'); view.setUint32(4, 36 + length * 2, true);
+  writeStr(8, 'WAVE'); writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, numCh, true);
+  view.setUint32(24, rate, true); view.setUint32(28, rate * 2, true);
+  view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+  writeStr(36, 'data'); view.setUint32(40, length * 2, true);
+  let off = 44;
+  for (let i = 0; i < length; i++, off += 2) {
+    const s = Math.max(-1, Math.min(1, data[i]));
+    view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+  }
+  return new Blob([out], { type: 'audio/wav' });
+}
+/* Split text into sentence chunks (on ။ and newlines), each ≲180 chars, order preserved. */
+function splitChunks(text) {
+  const rawParts = text.split(/(?<=[။\n])/).map(s => s.trim()).filter(Boolean);
+  const pieces = [];
+  for (const part of rawParts) {
+    if (part.length <= 180) { pieces.push(part); continue; }
+    // Very long sentence: split further on ၊ or hard-cut.
+    let rest = part;
+    while (rest.length > 180) {
+      let cut = rest.lastIndexOf('၊', 180);
+      if (cut < 60) cut = 180;
+      pieces.push(rest.slice(0, cut + (rest[cut] === '၊' ? 1 : 0)).trim());
+      rest = rest.slice(cut + (rest[cut] === '၊' ? 1 : 0)).trim();
+    }
+    if (rest) pieces.push(rest);
+  }
+  const chunks = [];
+  let cur = '';
+  for (const p of pieces) {
+    if (!cur) { cur = p; }
+    else if ((cur + ' ' + p).length <= 180) { cur = cur + ' ' + p; }
+    else { chunks.push(cur); cur = p; }
+  }
+  if (cur) chunks.push(cur);
+  return chunks;
+}
+function buildInstruction(emotionId, speedId, pitchId) {
+  const em = (EMOTIONS.find(e => e.id === emotionId) || {}).id || 'Neutral';
+  const sp = (SPEEDS.find(s => s.id === speedId) || {}).prompt || 'normal';
+  const pt = (PITCHES.find(p => p.id === pitchId) || {}).prompt || '';
+  const parts = [];
+  if (em !== 'Neutral') parts.push('a ' + em.toLowerCase() + ' tone');
+  if (sp !== 'normal') parts.push('a ' + sp + ' pace');
+  if (pt !== '') parts.push(pt);
+  if (parts.length > 0) {
+    return 'Instructions: Read the following text in Burmese. You MUST maintain exactly ' + parts.join(' and ') +
+      ' consistently from the first word to the very last word without any variation in pitch or style.\n\nText to read:';
+  }
+  return 'Instructions: Read the following text in Burmese consistently from start to finish.\n\nText to read:';
+}
+function showError(boxId, message, onRetry) {
+  const box = $(boxId);
+  box.innerHTML = '';
+  const span = document.createElement('div');
+  span.textContent = message;
+  box.appendChild(span);
+  if (onRetry) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = '🔄 ပြန်ကြိုးစားမည်';
+    btn.addEventListener('click', () => { box.classList.remove('show'); onRetry(); });
+    box.appendChild(btn);
+  }
+  box.classList.add('show');
+}
+function hideError(boxId) { $(boxId).classList.remove('show'); }
+
+/* ================= STATE ================= */
+let engine = 'nara'; // 'nara' | 'gemini'
+let naraVoice = 'shoon';
+let geminiVoice = 'Charon';
+let selEmotion = 'Neutral';
+let selSpeed = 'normal';
+let audioCtx = null;
+let currentAudioBlobUrl = null;
+
+/* ================= TABS ================= */
+$('tabBtnAudio').addEventListener('click', () => setTab('audio'));
+$('tabBtnThumb').addEventListener('click', () => setTab('thumb'));
+function setTab(tab) {
+  const isAudio = tab === 'audio';
+  $('tabAudio').classList.toggle('hidden', !isAudio);
+  $('tabThumb').classList.toggle('hidden', isAudio);
+  $('tabBtnAudio').className = 'tab-btn' + (isAudio ? ' active-audio' : '');
+  $('tabBtnThumb').className = 'tab-btn' + (!isAudio ? ' active-thumb' : '');
+}
+
+/* ================= ENGINE SELECTOR ================= */
+$('engineNara').addEventListener('click', () => setEngine('nara'));
+$('engineGemini').addEventListener('click', () => setEngine('gemini'));
+function setEngine(e) {
+  engine = e;
+  $('engineNara').className = 'engine-btn' + (e === 'nara' ? ' sel-nara' : '');
+  $('engineGemini').className = 'engine-btn' + (e === 'gemini' ? ' sel-gemini' : '');
+  $('naraControls').classList.toggle('hidden', e !== 'nara');
+  $('geminiControls').classList.toggle('hidden', e !== 'gemini');
+}
+
+/* ================= VOICE LISTS / CONTROLS ================= */
+function renderVoiceList(elId, voices, selectedId, selClass, onPick) {
+  const el = $(elId);
+  el.innerHTML = '';
+  voices.forEach(v => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'voice-item' + (v.id === selectedId ? ' ' + selClass : '');
+    const left = document.createElement('div');
+    const name = document.createElement('div');
+    name.className = 'vname';
+    name.textContent = v.name;
+    const badge = document.createElement('span');
+    badge.className = 'badge ' + (v.gender === 'Male' ? 'badge-m' : 'badge-f');
+    badge.textContent = v.mmGender;
+    name.appendChild(badge);
+    const desc = document.createElement('div');
+    desc.className = 'vdesc';
+    desc.textContent = v.desc;
+    left.appendChild(name); left.appendChild(desc);
+    btn.appendChild(left);
+    if (v.id === selectedId) {
+      const chk = document.createElement('span');
+      chk.className = selClass === 'sel-nara' ? 'check-nara' : 'check';
+      chk.textContent = '✓';
+      btn.appendChild(chk);
+    }
+    btn.addEventListener('click', () => onPick(v.id));
+    el.appendChild(btn);
+  });
+}
+function renderNaraVoices() { renderVoiceList('naraVoiceList', NARA_VOICES, naraVoice, 'sel-nara', (id) => { naraVoice = id; renderNaraVoices(); }); }
+function renderGeminiVoices() { renderVoiceList('geminiVoiceList', GEMINI_VOICES, geminiVoice, 'sel', (id) => { geminiVoice = id; renderGeminiVoices(); }); }
+renderNaraVoices(); renderGeminiVoices();
+
+const pitchSel = $('pitchSelect');
+PITCHES.forEach(p => {
+  const opt = document.createElement('option');
+  opt.value = p.id; opt.textContent = p.emoji + ' ' + p.label;
+  pitchSel.appendChild(opt);
+});
+function renderEmotions() {
+  const grid = $('emotionGrid');
+  grid.innerHTML = '';
+  EMOTIONS.forEach(em => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip' + (selEmotion === em.id ? ' sel-pink' : '');
+    b.textContent = em.emoji + ' ' + em.label;
+    b.addEventListener('click', () => { selEmotion = em.id; renderEmotions(); });
+    grid.appendChild(b);
+  });
+}
+function renderSpeeds() {
+  const row = $('speedRow');
+  row.innerHTML = '';
+  SPEEDS.forEach(sp => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip' + (selSpeed === sp.id ? ' sel-yellow' : '');
+    b.textContent = sp.emoji + ' ' + sp.label;
+    b.addEventListener('click', () => { selSpeed = sp.id; renderSpeeds(); });
+    row.appendChild(b);
+  });
+}
+renderEmotions(); renderSpeeds();
+
+/* ================= TEXTAREA ================= */
+$('audioText').addEventListener('input', (e) => {
+  $('charCount').textContent = e.target.value.length;
+  $('genAudioBtn').disabled = !e.target.value.trim();
+});
+$('clearTextBtn').addEventListener('click', () => {
+  $('audioText').value = '';
+  $('charCount').textContent = '0';
+  $('genAudioBtn').disabled = true;
+});
+
+/* ================= AUDIO GENERATION ================= */
+async function fetchGeminiChunk(chunk) {
+  const res = await fetch('/api/tts-gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text: chunk,
+      voice: geminiVoice,
+      instruction: buildInstruction(selEmotion, selSpeed, pitchSel.value)
+    })
+  });
+  const data = await res.json().catch(() => null);
+  if (!data || !data.ok) {
+    throw new Error((data && data.message) ? data.message : ('Gemini server အမှား (HTTP ' + res.status + ')'));
+  }
+  const pcmBytes = base64ToBytes(data.audioBase64);
+  return pcmToWavArrayBuffer(pcmBytes, data.sampleRate || 24000);
+}
+async function fetchNaraChunk(chunk) {
+  const startRes = await fetch('/api/tts-nara', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: chunk, voice: naraVoice, normalize: $('normalizeToggle').checked })
+  });
+  const startData = await startRes.json().catch(() => null);
+  if (!startData || !startData.ok) {
+    throw new Error((startData && startData.message) ? startData.message : ('Nara server အမှား (HTTP ' + startRes.status + ')'));
+  }
+  const eventId = startData.eventId;
+  const deadline = Date.now() + 4 * 60 * 1000; // ~4 minutes per chunk
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 3000));
+    const stRes = await fetch('/api/tts-nara-status?event=' + encodeURIComponent(eventId));
+    const st = await stRes.json().catch(() => null);
+    if (!st) continue;
+    if (st.status === 'done' && st.audioBase64) {
+      const bytes = base64ToBytes(st.audioBase64);
+      return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+    }
+    if (st.status === 'error' || st.ok === false) {
+      throw new Error(st.message || 'Nara အသံဖန်တီးမှု ကျရှုံးပါသည်');
+    }
+    // else: processing — keep polling
+  }
+  throw new Error('Nara server က အချိန်ကြာလွန်းနေပါသည် (timeout)။ စာသား တိုတိုခွဲပြီး ပြန်ကြိုးစားပါ။');
+}
+
+$('genAudioBtn').addEventListener('click', generateAudio);
+async function generateAudio() {
+  const text = $('audioText').value.trim();
+  if (!text) { showToast('ကျေးဇူးပြု၍ စာသားအရင်ထည့်ပါ', 'error'); return; }
+  hideError('audioError');
+  const btn = $('genAudioBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⏳</span> ဖန်တီးနေပါသည်...';
+  $('playerCard').classList.remove('show');
+  const progress = $('audioProgress');
+
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+    const chunks = splitChunks(text);
+    const buffers = [];
+    for (let i = 0; i < chunks.length; i++) {
+      progress.textContent = 'အပိုင်း ' + (i + 1) + '/' + chunks.length + ' ထုတ်နေသည်…' +
+        (engine === 'nara' ? ' (အခမဲ့ server မို့ ခဏကြာနိုင်ပါတယ်)' : '');
+      const wavBuf = engine === 'nara' ? await fetchNaraChunk(chunks[i]) : await fetchGeminiChunk(chunks[i]);
+      const decoded = await audioCtx.decodeAudioData(wavBuf);
+      buffers.push(decoded);
+    }
+
+    // Concatenate all chunk buffers into one.
+    const rate = buffers[0].sampleRate;
+    const totalLen = buffers.reduce((acc, b) => acc + b.length, 0);
+    const merged = audioCtx.createBuffer(1, totalLen, rate);
+    const outData = merged.getChannelData(0);
+    let offset = 0;
+    for (const b of buffers) { outData.set(b.getChannelData(0), offset); offset += b.length; }
+
+    const wavBlob = encodeWavFromAudioBuffer(merged);
+    if (currentAudioBlobUrl) URL.revokeObjectURL(currentAudioBlobUrl);
+    currentAudioBlobUrl = URL.createObjectURL(wavBlob);
+    $('audioEl').src = currentAudioBlobUrl;
+    $('playerCard').classList.add('show');
+    progress.textContent = '';
+    showToast('အသံဖန်တီးမှု အောင်မြင်ပါသည်', 'success');
+  } catch (err) {
+    console.error(err);
+    progress.textContent = '';
+    showError('audioError', 'အသံဖန်တီးရာတွင် အမှားအယွင်းရှိပါသည်။ ' + (err && err.message ? '(' + err.message + ')' : ''), generateAudio);
+  } finally {
+    btn.disabled = !$('audioText').value.trim();
+    btn.innerHTML = '▶️ အသံဖန်တီးမည်';
+  }
+}
+
+/* ================= PLAYER ================= */
+const audioEl = $('audioEl');
+const barsEl = $('bars');
+for (let i = 0; i < 20; i++) {
+  const d = document.createElement('div');
+  d.style.animationDelay = (i * 0.06) + 's';
+  barsEl.appendChild(d);
+}
+$('playBtn').addEventListener('click', () => {
+  if (!audioEl.src) return;
+  if (audioEl.paused) { audioEl.play(); } else { audioEl.pause(); }
+});
+audioEl.addEventListener('play', () => { $('playBtn').textContent = '⏸'; barsEl.classList.add('playing'); });
+audioEl.addEventListener('pause', () => { $('playBtn').textContent = '▶'; barsEl.classList.remove('playing'); });
+audioEl.addEventListener('ended', () => { $('playBtn').textContent = '▶'; barsEl.classList.remove('playing'); });
+$('downloadAudioBtn').addEventListener('click', () => {
+  if (!currentAudioBlobUrl) return;
+  const a = document.createElement('a');
+  a.href = currentAudioBlobUrl;
+  a.download = 'AChan_Audio_' + Date.now() + '.wav';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast('အသံဖိုင်ကို ဒေါင်းလုဒ်ဆွဲပြီးပါပြီ', 'success');
+});
+
+/* ================= THUMBNAIL ================= */
+let thumbRatio = '16:9';
+let thumbColorIdx = 0;
+let customFontName = null;
+
+const swWrap = $('swatches');
+COLOR_STYLES.forEach((c, idx) => {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'swatch' + (idx === 0 ? ' sel' : '');
+  const dot = document.createElement('span');
+  dot.className = 'dot';
+  dot.style.background = c.swatch;
+  const nm = document.createElement('span');
+  nm.className = 'sname';
+  nm.textContent = c.name.split(' and ')[0].replace(' with Heavy Drop Shadow', '').replace(' and Dark Contrast', '');
+  b.appendChild(dot); b.appendChild(nm);
+  b.addEventListener('click', () => {
+    thumbColorIdx = idx;
+    swWrap.querySelectorAll('.swatch').forEach((el, i) => el.classList.toggle('sel', i === idx));
+    $('colorName').textContent = c.name;
+  });
+  swWrap.appendChild(b);
+});
+$('colorName').textContent = COLOR_STYLES[0].name;
+
+$('ratio169').addEventListener('click', () => setRatio('16:9'));
+$('ratio916').addEventListener('click', () => setRatio('9:16'));
+function setRatio(r) {
+  thumbRatio = r;
+  $('ratio169').classList.toggle('sel', r === '16:9');
+  $('ratio916').classList.toggle('sel', r === '9:16');
+}
+
+$('fontFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const fontName = 'CustomFont_' + Date.now();
+    const buf = await file.arrayBuffer();
+    const face = new FontFace(fontName, buf);
+    await face.load();
+    document.fonts.add(face);
+    customFontName = fontName;
+    $('fontUploadText').textContent = '✅ Font တင်ထားပါသည်: ' + file.name;
+    $('fontUploadBox').classList.add('has');
+    $('removeFontBtn').classList.remove('hidden');
+    showToast('Font အောင်မြင်စွာ တင်ပြီးပါပြီ', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Font တင်ရာတွင် အမှားအယွင်းရှိပါသည် (.ttf, .otf သာ လက်ခံပါသည်)', 'error');
+  }
+});
+$('removeFontBtn').addEventListener('click', () => {
+  customFontName = null;
+  $('fontFile').value = '';
+  $('fontUploadText').textContent = '📤 Click to upload .TTF / .OTF font file';
+  $('fontUploadBox').classList.remove('has');
+  $('removeFontBtn').classList.add('hidden');
+});
+
+function wrapLines(ctx, text, maxWidth) {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width <= maxWidth || !line) { line = test; }
+    else { lines.push(line); line = w; }
+  }
+  if (line) lines.push(line);
+  return lines.length ? lines : [text];
+}
+
+$('genThumbBtn').addEventListener('click', generateThumbnail);
+async function generateThumbnail() {
+  const prompt = $('thumbPrompt').value.trim();
+  const title = $('thumbTitle').value.trim();
+  const subtitle = $('thumbSubtitle').value.trim();
+  if (!prompt) { showToast('ပုံအတွက် Prompt (English) အရင် ထည့်ပါ', 'error'); return; }
+  if (!title) { showToast('ကျေးဇူးပြု၍ စာသား အရင်ထည့်ပါ', 'error'); return; }
+  hideError('thumbError');
+  const btn = $('genThumbBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⏳</span> ဖန်တီးနေပါသည်...';
+  const progress = $('thumbProgress');
+  progress.textContent = 'နောက်ခံပုံ ထုတ်နေသည်… (ခဏကြာနိုင်ပါတယ်)';
+
+  try {
+    const W = thumbRatio === '16:9' ? 1280 : 720;
+    const H = thumbRatio === '16:9' ? 720 : 1280;
+    const seed = Math.floor(Math.random() * 1000000);
+    const imgUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) +
+      '?width=' + W + '&height=' + H + '&nologo=true&seed=' + seed;
+    const res = await fetch(imgUrl);
+    if (!res.ok) throw new Error('ပုံထုတ် server မှ အမှား (HTTP ' + res.status + ')');
+    const blob = await res.blob();
+    const bmp = await createImageBitmap(blob);
+
+    progress.textContent = 'စာသား ထည့်နေသည်…';
+    const canvas = $('thumbCanvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // Cover-fit draw
+    const scale = Math.max(W / bmp.width, H / bmp.height);
+    const dw = bmp.width * scale, dh = bmp.height * scale;
+    ctx.drawImage(bmp, (W - dw) / 2, (H - dh) / 2, dw, dh);
+
+    // Dark gradient for readability
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, 'rgba(0,0,0,0.10)');
+    grad.addColorStop(0.5, 'rgba(0,0,0,0.35)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.78)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    const cs = COLOR_STYLES[thumbColorIdx];
+    const style = $('thumbStyle').value;
+    const fontFamily = (customFontName ? '"' + customFontName + '", ' : '') + "'Pyidaungsu', 'Myanmar Text', 'Noto Sans Myanmar', sans-serif";
+    const maxW = W * 0.9;
+
+    // Fit title font size: shrink until wrapped lines fit (≤3 lines, block ≤ 55% height)
+    let fontSize = Math.round(W * 0.105);
+    let titleLines = [];
+    while (fontSize > 28) {
+      ctx.font = '900 ' + fontSize + 'px ' + fontFamily;
+      titleLines = wrapLines(ctx, title, maxW);
+      const blockH = titleLines.length * fontSize * 1.25;
+      if (titleLines.length <= 3 && blockH <= H * 0.55) break;
+      fontSize -= 4;
+    }
+    const subSize = Math.max(24, Math.round(fontSize * 0.52));
+    const lineH = fontSize * 1.25;
+    const subLineH = subSize * 1.3;
+    const totalTextH = titleLines.length * lineH + (subtitle ? subLineH + 10 : 0);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+
+    const drawLines = (startCenterY) => {
+      let y = startCenterY - totalTextH / 2 + lineH / 2;
+      ctx.font = '900 ' + fontSize + 'px ' + fontFamily;
+      for (const ln of titleLines) {
+        if (style === 'shadow') {
+          ctx.shadowColor = cs.shadow; ctx.shadowBlur = cs.blur; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
+          ctx.lineWidth = 2; ctx.strokeStyle = cs.stroke;
+          ctx.strokeText(ln, W / 2, y);
+          ctx.fillStyle = cs.fill;
+          ctx.fillText(ln, W / 2, y);
+        } else if (style === 'outline') {
+          ctx.shadowColor = cs.shadow; ctx.shadowBlur = cs.blur; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
+          ctx.lineWidth = Math.max(4, cs.sw * (W / 1280));
+          ctx.strokeStyle = cs.stroke;
+          ctx.strokeText(ln, W / 2, y);
+          ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+          ctx.fillStyle = cs.fill;
+          ctx.fillText(ln, W / 2, y);
+        } else { // pill styles: plain bold fill, slight shadow
+          ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 6; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 2;
+          ctx.fillStyle = cs.fill;
+          ctx.fillText(ln, W / 2, y);
+        }
+        y += lineH;
+      }
+      if (subtitle) {
+        const subCenterY = startCenterY - totalTextH / 2 + titleLines.length * lineH + 10 + subLineH / 2;
+        ctx.font = '700 ' + subSize + 'px ' + fontFamily;
+        ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 8; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 2;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(subtitle, W / 2, subCenterY);
+        ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+      }
+    };
+
+    if (style === 'bottom-pill' || style === 'top-pill') {
+      const padX = 36, padY = 26;
+      const blockW = maxW + padX * 2;
+      const blockH = totalTextH + padY * 2;
+      const bx = (W - blockW) / 2;
+      const by = style === 'bottom-pill' ? H - blockH - 28 : 28;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 18;
+      ctx.fillStyle = 'rgba(2,6,23,0.74)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, by, blockW, blockH, 24); else ctx.rect(bx, by, blockW, blockH);
+      ctx.fill();
+      ctx.restore();
+      drawLines(by + blockH / 2);
+    } else {
+      drawLines(H / 2);
+    }
+
+    canvas.classList.add('show');
+    $('thumbResultCard').classList.remove('hidden');
+    progress.textContent = '';
+    showToast('Thumbnail ဖန်တီးမှု အောင်မြင်ပါသည်', 'success');
+  } catch (err) {
+    console.error(err);
+    progress.textContent = '';
+    showError('thumbError', 'Thumbnail ဖန်တီးရာတွင် အမှားအယွင်းရှိပါသည်။ ' + (err && err.message ? '(' + err.message + ')' : ''), generateThumbnail);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✨ Thumbnail ဖန်တီးမည်';
+  }
+}
+$('downloadThumbBtn').addEventListener('click', () => {
+  const canvas = $('thumbCanvas');
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'AChan_Thumbnail_' + Date.now() + '.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    showToast('ပုံကို ဒေါင်းလုဒ်ဆွဲပြီးပါပြီ', 'success');
+  }, 'image/png');
+});
+
+/* ================= PWA INSTALL ================= */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!window.matchMedia('(display-mode: standalone)').matches) {
+    $('installBtn').style.display = 'block';
+  }
+});
+$('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  $('installBtn').style.display = 'none';
+});
+window.addEventListener('appinstalled', () => { $('installBtn').style.display = 'none'; });
+
+/* ================= SERVICE WORKER ================= */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((e) => console.warn('SW register failed', e));
+  });
+}
+</script>
+</body>
+</html>
