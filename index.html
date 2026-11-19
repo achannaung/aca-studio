@@ -142,6 +142,12 @@
   .bars.playing div { opacity: 1; animation: bounce .7s ease-in-out infinite alternate; }
   @keyframes bounce { from { height: 6px; } to { height: 28px; } }
   .dl-btn { background: #1e293b; color: #e2e8f0; padding: 10px; border-radius: 10px; border: 1px solid #475569; cursor: pointer; font-size: 16px; }
+  .hist-item { display: flex; align-items: center; gap: 12px; background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 10px 12px; }
+  .hist-meta { flex: 1; min-width: 0; }
+  .hist-text { font-size: 13px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hist-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .hist-btn { flex: none; width: 38px; height: 38px; border-radius: 9999px; border: 1px solid #334155; background: #1e293b; color: #fff; cursor: pointer; font-size: 15px; }
+  .hist-btn:hover { background: #334155; }
   .dl-btn:hover { background: #334155; color: #fff; }
   .attribution { font-size: 11px; color: #64748b; text-align: center; line-height: 1.7; word-break: break-all; }
   .attribution a { color: #94a3b8; }
@@ -278,6 +284,14 @@
             <button class="dl-btn" id="downloadAudioBtn" type="button" title="Download Audio">⬇️</button>
           </div>
           <audio id="audioEl" class="hidden"></audio>
+        </div>
+
+        <div class="card hidden" id="historyCard">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1e293b; padding-bottom:12px; margin-bottom:14px;">
+            <div style="font-size:14px; font-weight:700;">🕘 History — နောက်ဆုံး ထုတ်ထားသော အသံများ</div>
+            <button class="btn-sub" id="clearHistoryBtn" type="button" style="padding:6px 12px; font-size:12px;">🗑️ အကုန်ဖျက်</button>
+          </div>
+          <div id="historyList" style="display:flex; flex-direction:column; gap:10px;"></div>
         </div>
       </div>
     </div>
@@ -628,6 +642,19 @@ async function generateAudio() {
     currentAudioBlobUrl = URL.createObjectURL(wavBlob);
     $('audioEl').src = currentAudioBlobUrl;
     $('playerCard').classList.add('show');
+    // Save to history (IndexedDB, keeps the last 4).
+    try {
+      const voiceObj = engine === 'nara' ? NARA_VOICES.find(v => v.id === naraVoice) : GEMINI_VOICES.find(v => v.id === geminiVoice);
+      const metaParts = [engine === 'nara' ? 'Nara Mini' : 'Gemini', voiceObj ? voiceObj.name : ''];
+      if (engine === 'gemini') {
+        const st = STYLES.find(s => s.id === styleSel.value);
+        if (st && st.id !== 'normal') metaParts.push(st.label);
+      }
+      const d = new Date();
+      metaParts.push(d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+      await histAdd({ ts: Date.now(), text: text.slice(0, 300), meta: metaParts.filter(Boolean).join(' \u2022 '), blob: wavBlob });
+      renderHistory();
+    } catch (e) { console.warn('history save failed', e); }
     progress.textContent = '';
     showToast('အသံဖန်တီးမှု အောင်မြင်ပါသည်', 'success');
   } catch (err) {
@@ -663,6 +690,93 @@ $('downloadAudioBtn').addEventListener('click', () => {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   showToast('အသံဖိုင်ကို ဒေါင်းလုဒ်ဆွဲပြီးပါပြီ', 'success');
 });
+
+/* ================= TTS HISTORY (IndexedDB, last 4) ================= */
+const HIST_MAX = 4;
+let histDbPromise = null;
+function histDb() {
+  if (!histDbPromise) {
+    histDbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open('aca-studio', 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore('tts-history', { keyPath: 'id', autoIncrement: true }); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  return histDbPromise;
+}
+function histReq(req) { return new Promise((res, rej) => { req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); }); }
+async function histAdd(entry) {
+  const db = await histDb();
+  await histReq(db.transaction('tts-history', 'readwrite').objectStore('tts-history').add(entry));
+  const keys = await histReq(db.transaction('tts-history', 'readonly').objectStore('tts-history').getAllKeys());
+  keys.sort((a, b) => a - b);
+  if (keys.length > HIST_MAX) {
+    const store = db.transaction('tts-history', 'readwrite').objectStore('tts-history');
+    for (const k of keys.slice(0, keys.length - HIST_MAX)) await histReq(store.delete(k));
+  }
+}
+async function histAll() {
+  const db = await histDb();
+  const all = await histReq(db.transaction('tts-history', 'readonly').objectStore('tts-history').getAll());
+  return all.sort((a, b) => b.id - a.id);
+}
+async function histClear() {
+  const db = await histDb();
+  await histReq(db.transaction('tts-history', 'readwrite').objectStore('tts-history').clear());
+}
+const histUrls = {};
+async function renderHistory() {
+  let items = [];
+  try { items = await histAll(); } catch (e) { console.warn('history load failed', e); }
+  const card = $('historyCard');
+  const list = $('historyList');
+  list.innerHTML = '';
+  for (const key of Object.keys(histUrls)) { URL.revokeObjectURL(histUrls[key]); delete histUrls[key]; }
+  if (!items.length) { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  for (const it of items) {
+    const url = URL.createObjectURL(it.blob);
+    histUrls[it.id] = url;
+    const row = document.createElement('div');
+    row.className = 'hist-item';
+    const meta = document.createElement('div');
+    meta.className = 'hist-meta';
+    const t = document.createElement('div');
+    t.className = 'hist-text';
+    t.textContent = it.text;
+    t.title = it.text;
+    const s = document.createElement('div');
+    s.className = 'hist-sub';
+    s.textContent = it.meta;
+    meta.appendChild(t); meta.appendChild(s);
+    const play = document.createElement('button');
+    play.className = 'hist-btn'; play.type = 'button'; play.textContent = '\u25B6'; play.title = 'Play';
+    play.addEventListener('click', () => {
+      currentAudioBlobUrl = url;
+      audioEl.src = url;
+      $('playerCard').classList.add('show');
+      audioEl.play();
+    });
+    const dl = document.createElement('button');
+    dl.className = 'hist-btn'; dl.type = 'button'; dl.textContent = '\u2B07\uFE0F'; dl.title = 'Download';
+    dl.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'AChan_Audio_' + it.id + '.wav';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      showToast('အသံဖိုင်ကို ဒေါင်းလုဒ်ဆွဲပြီးပါပြီ', 'success');
+    });
+    row.appendChild(meta); row.appendChild(play); row.appendChild(dl);
+    list.appendChild(row);
+  }
+}
+$('clearHistoryBtn').addEventListener('click', async () => {
+  try { await histClear(); } catch (e) { console.warn(e); }
+  renderHistory();
+  showToast('History ကို ဖျက်ပြီးပါပြီ', 'success');
+});
+renderHistory();
 
 /* ================= PWA INSTALL ================= */
 let deferredPrompt = null;

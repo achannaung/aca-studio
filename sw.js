@@ -1,6 +1,6 @@
 // AChan AI Studio — Service Worker
 // Cache-first for the app shell; network-only for /api/* (TTS generation must always be live).
-const CACHE_NAME = 'achan-ai-studio-v2';
+const CACHE_NAME = 'achan-ai-studio-v3';
 const APP_SHELL = [
   '/',
   '/index.html',
