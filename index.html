@@ -272,6 +272,10 @@
               <div class="voice-list" id="geminiVoiceList"></div>
             </div>
             <div>
+              <label class="lbl">🎙️ စကားပြော Style</label>
+              <select id="styleSelect"></select>
+            </div>
+            <div>
               <label class="lbl">🎚️ အသံ အနိမ့်အမြင့်</label>
               <select id="pitchSelect"></select>
             </div>
@@ -401,11 +405,20 @@ const SPEEDS = [
   { id: 'normal', label: 'ပုံမှန်', prompt: 'normal', emoji: '▶️' },
   { id: 'fast', label: 'အမြန်', prompt: 'fast', emoji: '⚡' }
 ];
+const STYLES = [
+  { id: 'normal', label: 'ပုံမှန် (Normal)', prompt: '', emoji: '🎙️' },
+  { id: 'news', label: 'သတင်းကြေညာ (News)', prompt: 'a professional, authoritative and clear news anchor style, formal and steady', emoji: '📰' },
+  { id: 'recap', label: 'ရုပ်ရှင် Recap (Movie Recap)', prompt: 'an engaging and dramatic movie recap narrator style, energetic like a YouTube movie recap channel voiceover', emoji: '🎬' },
+  { id: 'documentary', label: 'မှတ်တမ်း (Documentary)', prompt: 'a deep, calm and engaging documentary narrator style', emoji: '🎥' },
+  { id: 'storytelling', label: 'ပုံပြင်ပြော (Storytelling)', prompt: 'an expressive, warm and immersive storytelling style', emoji: '📖' },
+  { id: 'dhamma', label: 'တရားဟော (Dhamma Talk)', prompt: 'a calm, slow, clear and respectful Dhamma sermon style, peaceful and reverent', emoji: '🙏' },
+  { id: 'ad', label: 'ကြော်ငြာ (Advertisement)', prompt: 'an upbeat, bright and persuasive advertising style', emoji: '📣' },
+  { id: 'casual', label: 'စကားပြော (Casual Chat)', prompt: 'a natural, friendly and relaxed conversational style', emoji: '💬' }
+];
 const PITCHES = [
   { id: 'normal', label: 'ပုံမှန် (Normal)', prompt: '', emoji: '🎵' },
-  { id: 'documentary', label: 'ရုပ်ရှင် Recap / မှတ်တမ်း', prompt: 'a deep, engaging, and dramatic documentary narrator pitch', emoji: '🎬' },
-  { id: 'storytelling', label: 'ပုံပြင်ပြော (Storytelling)', prompt: 'an expressive, engaging, and immersive storytelling pitch', emoji: '📖' },
-  { id: 'news', label: 'သတင်းကြေညာ (News)', prompt: 'a professional, authoritative, and clear news anchor pitch', emoji: '📰' }
+  { id: 'low', label: 'အနိမ့် (Deep / Low)', prompt: 'a deep, low-pitched voice', emoji: '🔉' },
+  { id: 'high', label: 'အမြင့် (Bright / High)', prompt: 'a bright, high-pitched voice', emoji: '🔊' }
 ];
 const COLOR_STYLES = [
   { name: 'Neon Cyan and Bright Yellow', swatch: 'linear-gradient(135deg,#00e5ff 50%,#ffff00 50%)', fill: '#FFFF00', stroke: '#000000', shadow: '#00FFFF', blur: 30, sw: 6 },
@@ -496,11 +509,13 @@ function splitChunks(text) {
   if (cur) chunks.push(cur);
   return chunks;
 }
-function buildInstruction(emotionId, speedId, pitchId) {
+function buildInstruction(emotionId, speedId, pitchId, styleId) {
   const em = (EMOTIONS.find(e => e.id === emotionId) || {}).id || 'Neutral';
   const sp = (SPEEDS.find(s => s.id === speedId) || {}).prompt || 'normal';
   const pt = (PITCHES.find(p => p.id === pitchId) || {}).prompt || '';
+  const st = (STYLES.find(s => s.id === styleId) || {}).prompt || '';
   const parts = [];
+  if (st !== '') parts.push(st);
   if (em !== 'Neutral') parts.push('a ' + em.toLowerCase() + ' tone');
   if (sp !== 'normal') parts.push('a ' + sp + ' pace');
   if (pt !== '') parts.push(pt);
@@ -593,6 +608,12 @@ function renderNaraVoices() { renderVoiceList('naraVoiceList', NARA_VOICES, nara
 function renderGeminiVoices() { renderVoiceList('geminiVoiceList', GEMINI_VOICES, geminiVoice, 'sel', (id) => { geminiVoice = id; renderGeminiVoices(); }); }
 renderNaraVoices(); renderGeminiVoices();
 
+const styleSel = $('styleSelect');
+STYLES.forEach(s => {
+  const opt = document.createElement('option');
+  opt.value = s.id; opt.textContent = s.emoji + ' ' + s.label;
+  styleSel.appendChild(opt);
+});
 const pitchSel = $('pitchSelect');
 PITCHES.forEach(p => {
   const opt = document.createElement('option');
@@ -644,7 +665,7 @@ async function fetchGeminiChunk(chunk) {
     body: JSON.stringify({
       text: chunk,
       voice: geminiVoice,
-      instruction: buildInstruction(selEmotion, selSpeed, pitchSel.value)
+      instruction: buildInstruction(selEmotion, selSpeed, pitchSel.value, styleSel.value)
     })
   });
   const data = await res.json().catch(() => null);
