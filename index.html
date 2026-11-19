@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>AChan AI Studio</title>
-<meta name="description" content="AChan AI Studio - Burmese text-to-speech and YouTube thumbnail maker" />
+<meta name="description" content="AChan AI Studio - Burmese text-to-speech studio" />
 <meta name="theme-color" content="#020617" />
 <link rel="manifest" href="/manifest.webmanifest" />
 <link rel="icon" type="image/png" href="/icons/icon-192.png" />
@@ -40,19 +40,6 @@
     border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
     backdrop-filter: blur(12px);
   }
-  .tabs { display: flex; justify-content: center; margin-bottom: 24px; }
-  .tabs-inner {
-    display: flex; gap: 8px; background: rgba(15,23,42,.62); padding: 6px;
-    border-radius: 16px; border: 1px solid rgba(51,65,85,.55); overflow-x: auto; max-width: 100%;
-  }
-  .tab-btn {
-    padding: 12px 24px; border-radius: 12px; border: none; background: transparent;
-    color: #94a3b8; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap;
-    font-family: inherit; transition: all .25s;
-  }
-  .tab-btn:hover { color: #fff; background: rgba(255,255,255,.05); }
-  .tab-btn.active-audio { background: linear-gradient(to right, #0891b2, #2563eb); color: #fff; box-shadow: 0 8px 20px rgba(30,58,138,.4); }
-  .tab-btn.active-thumb { background: linear-gradient(to right, #059669, #0d9488); color: #fff; box-shadow: 0 8px 20px rgba(19,78,74,.4); }
   label.lbl { display: block; font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 10px; }
   textarea, input[type="text"], select {
     width: 100%; background: rgba(2,6,23,.55); border: 1px solid #334155; border-radius: 12px;
@@ -122,8 +109,6 @@
   }
   .btn-audio { background: linear-gradient(to right, #0891b2, #2563eb); box-shadow: 0 10px 25px rgba(30,58,138,.35); }
   .btn-audio:hover:not(:disabled) { background: linear-gradient(to right, #06b6d4, #3b82f6); }
-  .btn-thumb { background: linear-gradient(to right, #059669, #0d9488); box-shadow: 0 10px 25px rgba(19,78,74,.35); }
-  .btn-thumb:hover:not(:disabled) { background: linear-gradient(to right, #10b981, #14b8a6); }
   .btn-main:disabled { opacity: .5; cursor: not-allowed; }
   .btn-sub {
     padding: 14px 20px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 14px;
@@ -189,8 +174,6 @@
   .upload-box:hover { border-color: rgba(16,185,129,.5); }
   .upload-box.has { background: rgba(6,78,59,.3); border-color: rgba(16,185,129,.5); color: #a7f3d0; }
   .hint { font-size: 11px; color: #94a3b8; line-height: 1.6; }
-  #thumbCanvas { max-width: 100%; height: auto; border-radius: 12px; border: 1px solid #334155; background: #020617; display: none; }
-  #thumbCanvas.show { display: block; margin: 0 auto; }
   #toast {
     position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 100; display: none;
     padding: 14px 22px; border-radius: 14px; font-size: 14px; font-weight: 500; max-width: 92vw;
@@ -209,16 +192,9 @@
 
   <header class="top">
     <h1>🎙️ AChan AI Studio</h1>
-    <p>အသံဖန်တီးမှု နှင့် Thumbnail များကို တစ်နေရာတည်းတွင် အလွယ်တကူ ပြုလုပ်ပါ</p>
+    <p>မြန်မာစာသားမှ အသံ ဖန်တီးပါ — Nara Mini (အခမဲ့) နှင့် Gemini</p>
     <button id="installBtn" type="button">📲 App အဖြစ် သွင်းမည် (Install)</button>
   </header>
-
-  <div class="tabs">
-    <div class="tabs-inner">
-      <button class="tab-btn active-audio" id="tabBtnAudio" type="button">🔊 အသံဖန်တီးမည်</button>
-      <button class="tab-btn" id="tabBtnThumb" type="button">🖼️ Thumbnail Maker</button>
-    </div>
-  </div>
 
   <!-- ================= AUDIO TAB ================= -->
   <section id="tabAudio">
@@ -307,72 +283,6 @@
     </div>
   </section>
 
-  <!-- ================= THUMBNAIL TAB ================= -->
-  <section id="tabThumb" class="hidden">
-    <div style="max-width:896px; margin:0 auto;" class="stack">
-      <div class="card stack-sm">
-        <div>
-          <label class="lbl">🌄 ပုံအတွက် Prompt (English)</label>
-          <textarea id="thumbPrompt" rows="3" style="resize:none;" placeholder="e.g. A dramatic B-2 stealth bomber flying through dark clouds at night, cinematic lighting"></textarea>
-          <p class="hint" style="margin-top:6px;">နောက်ခံပုံကို AI ဖြင့် ထုတ်ပေးပါမည်။ စာသားကိုတော့ ပုံပေါ်မှာ တိကျစွာ ထည့်ပေးပါမည် (AI က မြန်မာစာ မမှန်တတ်လို့ပါ)။</p>
-        </div>
-        <div>
-          <label class="lbl">📖 Thumbnail တွင်ပါဝင်မည့် စာသား (Title Text)</label>
-          <textarea id="thumbTitle" rows="3" style="resize:none;" placeholder="ဥပမာ - ရန်သူမသိအောင် တိတ်တဆိတ် တိုက်ခိုက်နိုင်တဲ့ အမှောင်ထဲက B-2 Spirit..."></textarea>
-        </div>
-        <div>
-          <label class="lbl">💬 Subtitle စာသား (Optional)</label>
-          <input type="text" id="thumbSubtitle" placeholder="ဥပမာ - အပိုင်း (၁) အပြည့်အစုံ..." />
-        </div>
-        <div>
-          <div style="display:flex; align-items:center; justify-content:space-between;">
-            <label class="lbl" style="margin-bottom:0;">🔤 Custom Font တင်ရန် (Optional)</label>
-            <button id="removeFontBtn" type="button" class="hidden" style="background:rgba(69,10,10,.3); color:#f87171; border:none; padding:4px 10px; border-radius:8px; font-size:12px; cursor:pointer; font-family:inherit;">✖ ဖြုတ်မည်</button>
-          </div>
-          <p class="hint" style="margin:6px 0 8px;">မြန်မာစာသားများကို AI က သေချာမရေးပေးနိုင်ပါက မိမိစိတ်ကြိုက် မြန်မာ Font (.ttf, .otf) တင်၍ အသုံးပြုနိုင်ပါသည်။</p>
-          <label class="upload-box" id="fontUploadBox">
-            <span id="fontUploadText">📤 Click to upload .TTF / .OTF font file</span>
-            <input type="file" id="fontFile" class="hidden" accept=".ttf,.otf,.woff" />
-          </label>
-        </div>
-        <div>
-          <label class="lbl">🎨 စာသား ကာလာ (Text Color)</label>
-          <div class="swatches" id="swatches"></div>
-          <div id="colorName" style="font-size:12px; color:#94a3b8; margin-top:8px;"></div>
-        </div>
-        <div>
-          <label class="lbl">🪄 စာသား ဒီဇိုင်း (Text Style)</label>
-          <select id="thumbStyle">
-            <option value="outline">Outline အထူ (Heavy Outline)</option>
-            <option value="shadow">အရိပ် (Drop Shadow)</option>
-            <option value="bottom-pill">အောက်ခြေ Pill (Bottom Pill)</option>
-            <option value="top-pill">အပေါ် Pill (Top Pill)</option>
-          </select>
-        </div>
-        <div>
-          <label class="lbl">⚙️ ပုံအရွယ်အစား (Aspect Ratio)</label>
-          <div class="ratio-row">
-            <button class="ratio-btn sel" id="ratio169" type="button">▬ 16:9 (YouTube)</button>
-            <button class="ratio-btn" id="ratio916" type="button">▮ 9:16 (Shorts/Reels)</button>
-          </div>
-        </div>
-        <div class="row-flex" style="align-items:stretch;">
-          <button class="btn-main btn-thumb" id="genThumbBtn" type="button" style="flex:2;">✨ Thumbnail ဖန်တီးမည်</button>
-        </div>
-        <div class="progress-text" id="thumbProgress" style="color:#6ee7b7;"></div>
-        <div class="error-box" id="thumbError"></div>
-      </div>
-
-      <div class="card hidden" id="thumbResultCard">
-        <div style="font-size:16px; font-weight:700; border-bottom:1px solid #1e293b; padding-bottom:14px; margin-bottom:18px;">✅ ဖန်တီးမှု ရလဒ်</div>
-        <canvas id="thumbCanvas" width="1280" height="720"></canvas>
-        <div style="text-align:center; margin-top:20px;">
-          <button class="btn-sub" id="downloadThumbBtn" type="button">⬇️ ပုံကို ဒေါင်းလုဒ်ဆွဲမည် (PNG)</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
 </div>
 
 <script>
@@ -420,19 +330,6 @@ const PITCHES = [
   { id: 'low', label: 'အနိမ့် (Deep / Low)', prompt: 'a deep, low-pitched voice', emoji: '🔉' },
   { id: 'high', label: 'အမြင့် (Bright / High)', prompt: 'a bright, high-pitched voice', emoji: '🔊' }
 ];
-const COLOR_STYLES = [
-  { name: 'Neon Cyan and Bright Yellow', swatch: 'linear-gradient(135deg,#00e5ff 50%,#ffff00 50%)', fill: '#FFFF00', stroke: '#000000', shadow: '#00FFFF', blur: 30, sw: 6 },
-  { name: 'Pure White with Heavy Drop Shadow', swatch: '#ffffff', fill: '#FFFFFF', stroke: '#000000', shadow: 'rgba(0,0,0,0.9)', blur: 25, sw: 8 },
-  { name: 'Blood Red and Pure White', swatch: 'linear-gradient(135deg,#8b0000 50%,#ffffff 50%)', fill: '#FFFFFF', stroke: '#8B0000', shadow: '#000000', blur: 20, sw: 12 },
-  { name: 'Glowing Green and Dark Contrast', swatch: '#00ff00', fill: '#00FF00', stroke: '#000000', shadow: '#003300', blur: 25, sw: 8 },
-  { name: 'Luxury Gold and Deep Black', swatch: 'linear-gradient(135deg,#ffd700 50%,#1a1a1a 50%)', fill: '#FFD700', stroke: '#331A00', shadow: '#FF8C00', blur: 25, sw: 10 },
-  { name: 'Electric Blue and Crisp White', swatch: 'linear-gradient(135deg,#2979ff 50%,#ffffff 50%)', fill: '#FFFFFF', stroke: '#0D47A1', shadow: '#2979FF', blur: 25, sw: 8 },
-  { name: 'Vibrant Magenta and Deep Indigo', swatch: 'linear-gradient(135deg,#ff00ff 50%,#4b0082 50%)', fill: '#FF00FF', stroke: '#4B0082', shadow: '#FF1493', blur: 30, sw: 8 },
-  { name: 'Sunset Orange and Warm Yellow', swatch: 'linear-gradient(135deg,#ff9100 50%,#ffea00 50%)', fill: '#FFEA00', stroke: '#4E2600', shadow: '#FF6D00', blur: 25, sw: 8 },
-  { name: 'Metallic Silver and Ice Blue', swatch: 'linear-gradient(135deg,#cfd8dc 50%,#81d4fa 50%)', fill: '#ECEFF1', stroke: '#263238', shadow: '#81D4FA', blur: 25, sw: 8 },
-  { name: 'Bold Yellow and Solid Black', swatch: 'linear-gradient(135deg,#ffeb3b 50%,#000000 50%)', fill: '#FFEB3B', stroke: '#000000', shadow: 'rgba(0,0,0,0.85)', blur: 15, sw: 10 }
-];
-
 /* ================= HELPERS ================= */
 const $ = (id) => document.getElementById(id);
 let toastTimer = null;
@@ -550,17 +447,6 @@ let selEmotion = 'Neutral';
 let selSpeed = 'normal';
 let audioCtx = null;
 let currentAudioBlobUrl = null;
-
-/* ================= TABS ================= */
-$('tabBtnAudio').addEventListener('click', () => setTab('audio'));
-$('tabBtnThumb').addEventListener('click', () => setTab('thumb'));
-function setTab(tab) {
-  const isAudio = tab === 'audio';
-  $('tabAudio').classList.toggle('hidden', !isAudio);
-  $('tabThumb').classList.toggle('hidden', isAudio);
-  $('tabBtnAudio').className = 'tab-btn' + (isAudio ? ' active-audio' : '');
-  $('tabBtnThumb').className = 'tab-btn' + (!isAudio ? ' active-thumb' : '');
-}
 
 /* ================= ENGINE SELECTOR ================= */
 $('engineNara').addEventListener('click', () => setEngine('nara'));
@@ -776,227 +662,6 @@ $('downloadAudioBtn').addEventListener('click', () => {
   a.download = 'AChan_Audio_' + Date.now() + '.wav';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   showToast('အသံဖိုင်ကို ဒေါင်းလုဒ်ဆွဲပြီးပါပြီ', 'success');
-});
-
-/* ================= THUMBNAIL ================= */
-let thumbRatio = '16:9';
-let thumbColorIdx = 0;
-let customFontName = null;
-
-const swWrap = $('swatches');
-COLOR_STYLES.forEach((c, idx) => {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.className = 'swatch' + (idx === 0 ? ' sel' : '');
-  const dot = document.createElement('span');
-  dot.className = 'dot';
-  dot.style.background = c.swatch;
-  const nm = document.createElement('span');
-  nm.className = 'sname';
-  nm.textContent = c.name.split(' and ')[0].replace(' with Heavy Drop Shadow', '').replace(' and Dark Contrast', '');
-  b.appendChild(dot); b.appendChild(nm);
-  b.addEventListener('click', () => {
-    thumbColorIdx = idx;
-    swWrap.querySelectorAll('.swatch').forEach((el, i) => el.classList.toggle('sel', i === idx));
-    $('colorName').textContent = c.name;
-  });
-  swWrap.appendChild(b);
-});
-$('colorName').textContent = COLOR_STYLES[0].name;
-
-$('ratio169').addEventListener('click', () => setRatio('16:9'));
-$('ratio916').addEventListener('click', () => setRatio('9:16'));
-function setRatio(r) {
-  thumbRatio = r;
-  $('ratio169').classList.toggle('sel', r === '16:9');
-  $('ratio916').classList.toggle('sel', r === '9:16');
-}
-
-$('fontFile').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  try {
-    const fontName = 'CustomFont_' + Date.now();
-    const buf = await file.arrayBuffer();
-    const face = new FontFace(fontName, buf);
-    await face.load();
-    document.fonts.add(face);
-    customFontName = fontName;
-    $('fontUploadText').textContent = '✅ Font တင်ထားပါသည်: ' + file.name;
-    $('fontUploadBox').classList.add('has');
-    $('removeFontBtn').classList.remove('hidden');
-    showToast('Font အောင်မြင်စွာ တင်ပြီးပါပြီ', 'success');
-  } catch (err) {
-    console.error(err);
-    showToast('Font တင်ရာတွင် အမှားအယွင်းရှိပါသည် (.ttf, .otf သာ လက်ခံပါသည်)', 'error');
-  }
-});
-$('removeFontBtn').addEventListener('click', () => {
-  customFontName = null;
-  $('fontFile').value = '';
-  $('fontUploadText').textContent = '📤 Click to upload .TTF / .OTF font file';
-  $('fontUploadBox').classList.remove('has');
-  $('removeFontBtn').classList.add('hidden');
-});
-
-function wrapLines(ctx, text, maxWidth) {
-  const words = text.split(/\s+/).filter(Boolean);
-  const lines = [];
-  let line = '';
-  for (const w of words) {
-    const test = line ? line + ' ' + w : w;
-    if (ctx.measureText(test).width <= maxWidth || !line) { line = test; }
-    else { lines.push(line); line = w; }
-  }
-  if (line) lines.push(line);
-  return lines.length ? lines : [text];
-}
-
-$('genThumbBtn').addEventListener('click', generateThumbnail);
-async function generateThumbnail() {
-  const prompt = $('thumbPrompt').value.trim();
-  const title = $('thumbTitle').value.trim();
-  const subtitle = $('thumbSubtitle').value.trim();
-  if (!prompt) { showToast('ပုံအတွက် Prompt (English) အရင် ထည့်ပါ', 'error'); return; }
-  if (!title) { showToast('ကျေးဇူးပြု၍ စာသား အရင်ထည့်ပါ', 'error'); return; }
-  hideError('thumbError');
-  const btn = $('genThumbBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin">⏳</span> ဖန်တီးနေပါသည်...';
-  const progress = $('thumbProgress');
-  progress.textContent = 'နောက်ခံပုံ ထုတ်နေသည်… (ခဏကြာနိုင်ပါတယ်)';
-
-  try {
-    const W = thumbRatio === '16:9' ? 1280 : 720;
-    const H = thumbRatio === '16:9' ? 720 : 1280;
-    const seed = Math.floor(Math.random() * 1000000);
-    const imgUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) +
-      '?width=' + W + '&height=' + H + '&nologo=true&seed=' + seed;
-    const res = await fetch(imgUrl);
-    if (!res.ok) throw new Error('ပုံထုတ် server မှ အမှား (HTTP ' + res.status + ')');
-    const blob = await res.blob();
-    const bmp = await createImageBitmap(blob);
-
-    progress.textContent = 'စာသား ထည့်နေသည်…';
-    const canvas = $('thumbCanvas');
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d');
-
-    // Cover-fit draw
-    const scale = Math.max(W / bmp.width, H / bmp.height);
-    const dw = bmp.width * scale, dh = bmp.height * scale;
-    ctx.drawImage(bmp, (W - dw) / 2, (H - dh) / 2, dw, dh);
-
-    // Dark gradient for readability
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, 'rgba(0,0,0,0.10)');
-    grad.addColorStop(0.5, 'rgba(0,0,0,0.35)');
-    grad.addColorStop(1, 'rgba(0,0,0,0.78)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    const cs = COLOR_STYLES[thumbColorIdx];
-    const style = $('thumbStyle').value;
-    const fontFamily = (customFontName ? '"' + customFontName + '", ' : '') + "'Pyidaungsu', 'Myanmar Text', 'Noto Sans Myanmar', sans-serif";
-    const maxW = W * 0.9;
-
-    // Fit title font size: shrink until wrapped lines fit (≤3 lines, block ≤ 55% height)
-    let fontSize = Math.round(W * 0.105);
-    let titleLines = [];
-    while (fontSize > 28) {
-      ctx.font = '900 ' + fontSize + 'px ' + fontFamily;
-      titleLines = wrapLines(ctx, title, maxW);
-      const blockH = titleLines.length * fontSize * 1.25;
-      if (titleLines.length <= 3 && blockH <= H * 0.55) break;
-      fontSize -= 4;
-    }
-    const subSize = Math.max(24, Math.round(fontSize * 0.52));
-    const lineH = fontSize * 1.25;
-    const subLineH = subSize * 1.3;
-    const totalTextH = titleLines.length * lineH + (subtitle ? subLineH + 10 : 0);
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round';
-
-    const drawLines = (startCenterY) => {
-      let y = startCenterY - totalTextH / 2 + lineH / 2;
-      ctx.font = '900 ' + fontSize + 'px ' + fontFamily;
-      for (const ln of titleLines) {
-        if (style === 'shadow') {
-          ctx.shadowColor = cs.shadow; ctx.shadowBlur = cs.blur; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
-          ctx.lineWidth = 2; ctx.strokeStyle = cs.stroke;
-          ctx.strokeText(ln, W / 2, y);
-          ctx.fillStyle = cs.fill;
-          ctx.fillText(ln, W / 2, y);
-        } else if (style === 'outline') {
-          ctx.shadowColor = cs.shadow; ctx.shadowBlur = cs.blur; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
-          ctx.lineWidth = Math.max(4, cs.sw * (W / 1280));
-          ctx.strokeStyle = cs.stroke;
-          ctx.strokeText(ln, W / 2, y);
-          ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
-          ctx.fillStyle = cs.fill;
-          ctx.fillText(ln, W / 2, y);
-        } else { // pill styles: plain bold fill, slight shadow
-          ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 6; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 2;
-          ctx.fillStyle = cs.fill;
-          ctx.fillText(ln, W / 2, y);
-        }
-        y += lineH;
-      }
-      if (subtitle) {
-        const subCenterY = startCenterY - totalTextH / 2 + titleLines.length * lineH + 10 + subLineH / 2;
-        ctx.font = '700 ' + subSize + 'px ' + fontFamily;
-        ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 8; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 2;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(subtitle, W / 2, subCenterY);
-        ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-      }
-    };
-
-    if (style === 'bottom-pill' || style === 'top-pill') {
-      const padX = 36, padY = 26;
-      const blockW = maxW + padX * 2;
-      const blockH = totalTextH + padY * 2;
-      const bx = (W - blockW) / 2;
-      const by = style === 'bottom-pill' ? H - blockH - 28 : 28;
-      ctx.save();
-      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 18;
-      ctx.fillStyle = 'rgba(2,6,23,0.74)';
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(bx, by, blockW, blockH, 24); else ctx.rect(bx, by, blockW, blockH);
-      ctx.fill();
-      ctx.restore();
-      drawLines(by + blockH / 2);
-    } else {
-      drawLines(H / 2);
-    }
-
-    canvas.classList.add('show');
-    $('thumbResultCard').classList.remove('hidden');
-    progress.textContent = '';
-    showToast('Thumbnail ဖန်တီးမှု အောင်မြင်ပါသည်', 'success');
-  } catch (err) {
-    console.error(err);
-    progress.textContent = '';
-    showError('thumbError', 'Thumbnail ဖန်တီးရာတွင် အမှားအယွင်းရှိပါသည်။ ' + (err && err.message ? '(' + err.message + ')' : ''), generateThumbnail);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '✨ Thumbnail ဖန်တီးမည်';
-  }
-}
-$('downloadThumbBtn').addEventListener('click', () => {
-  const canvas = $('thumbCanvas');
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'AChan_Thumbnail_' + Date.now() + '.png';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-    showToast('ပုံကို ဒေါင်းလုဒ်ဆွဲပြီးပါပြီ', 'success');
-  }, 'image/png');
 });
 
 /* ================= PWA INSTALL ================= */

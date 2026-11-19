@@ -1,9 +1,8 @@
 # AChan AI Studio
 
-Burmese text-to-speech studio + YouTube thumbnail maker, deployed on Vercel.
+Burmese text-to-speech studio, deployed on Vercel. (The Thumbnail Maker tab was removed on 2026-11-19 at AChan's request — the app is TTS-only now.)
 
-- **TTS tab** — Nara Mini v1 (free, via Hugging Face Space) + Gemini TTS (server-side key)
-- **Thumbnail tab** — pollinations.ai background + canvas text overlay, custom fonts
+- **TTS** — Nara Mini v1 (free, via Hugging Face Space) + Gemini TTS (server-side key), with speaking style / speed / pitch controls for Gemini
 - PWA: installable (manifest + service worker + icons)
 
 ## Layout
